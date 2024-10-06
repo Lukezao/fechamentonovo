@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html manifest="">
+  <head>
+    <meta charset="UTF-8">
+    <!-- Meta tag viewport para dispositivos móveis -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fechamento Financeiro do Show</title>
+    <style>
+      /* Estilos básicos escuros e minimalistas */
+      body {
+        font-family: 'Helvetica Neue', Arial, sans-serif;
+        background-color: #121212;
+        color: #E0E0E0;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+      .container {
+        width: 100%;
+        max-width: 800px;
+        padding: 20px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        background-color: #1E1E1E;
+        border-radius: 8px;
+      }
+      h1, h2, h3 {
+        color: #BB86FC;
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        margin-top: 15px;
+        color: #BB86FC;
+      }
+      input, textarea, select {
+        width: 100%;
+        padding: 12px;
+        margin-top: 5px;
+        background-color: #333;
+        color: #E0E0E0;
+        border: none;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+      button {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #BB86FC;
+        color: #121212;
+        border: none;
+        cursor: pointer;
+        width: 100%;
+        font-weight: bold;
+        border-radius: 4px;
+        transition: background-color 0.3s ease;
+      }
+      button:hover {
+        background-color: #9B59B6;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+        background-color: #333;
+      }
+      table, th, td {
+        border: 1px solid #444;
+      }
+      th, td {
+        padding: 12px;
+        text-align: left;
+      }
+      th {
+        background-color: #444;
+        color: #BB86FC;
+      }
+      #total {
+        font-weight: bold;
+        margin-top: 30px;
+        font-size: 18px;
+        text-align: center;
+      }
+      img.logo {
+        width: 150px;
+        display: block;
+        margin: 20px auto;
+        filter: invert(1);
+      }
+      /* Media query para telas menores */
+      @media (max-width: 600px) {
+        body {
+          font-size: 16px;
+          padding: 10px;
+        }
+        button {
+          font-size: 16px;
+        }
+        th, td {
+          font-size: 14px;
+        }
+      }
+    </style>
+    <!-- Importa a biblioteca jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <img src="https://drive.google.com/uc?export=view&id=file-UirkBMh2xbx0rPS46cuZtYXG" alt="Logo GR6" class="logo">
+      <h1>Fechamento Financeiro do Show</h1>
+
+      <!-- Formulário do Show -->
+      <div id="show-section">
+        <h2>Dados do Show</h2>
+        <form id="show-form">
+          <label for="data" style="margin-top: 30px;">Data:</label>
+          <input type="date" id="data" required>
+
+          <label for="local">Local do Show:</label>
+          <input type="text" id="local" required>
+
+          <label for="valor-show">Valor do Show:</label>
+          <input type="number" id="valor-show" step="0.01" required>
+
+          <label for="vendedor">Vendedor:</label>
+          <select id="vendedor" required>
+            <option value="">Selecione um vendedor</option>
+            <option value="Vendedor 1">Vendedor 1</option>
+            <option value="Vendedor 2">Vendedor 2</option>
+            <option value="Vendedor 3">Vendedor 3</option>
+          </select>
+
+          <label for="produtor">Produtor:</label>
+          <input type="text" id="produtor" required>
+          <button type="button" onclick="confirmarProdutor()">Confirmar Produtor</button>
+        </form>
+
+        <!-- Formulário da Equipe -->
+        <h2>Equipe</h2>
+        <form id="equipe-form">
+          <label for="nome">Nome:</label>
+          <input type="text" id="nome" required>
+
+          <label for="funcao">Função:</label>
+          <input type="text" id="funcao" required>
+
+          <label for="valor-equipe">Valor:</label>
+          <input type="number" id="valor-equipe" step="0.01" required>
+
+          <button type="button" onclick="adicionarMembro()">Adicionar Membro</button>
+        </form>
+
+        <!-- Tabela da Equipe -->
+        <h3>Membros da Equipe</h3>
+        <table id="tabela-equipe">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Função</th>
+              <th>Valor</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Membros da equipe serão adicionados aqui -->
+          </tbody>
+        </table>
+
+        <!-- Total -->
+        <h2>Total</h2>
+        <p id="total">Valor do Show: R$ 0.00<br>Total da Equipe: R$ 0.00<br>Total Geral: R$ 0.00</p>
+
+        <!-- Botão para gerar PDF -->
+        <button type="button" onclick="gerarPDF()">Exportar em PDF</button>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        // Variável global para armazenar os membros da equipe
+        window.equipe = [];
+        window.logAlteracoes = [];
+
+        // Equipe fixa para Ryu The Runner
+        const equipeRyuTheRunner = [
+          { nome: "Luke", funcao: "Produtor", valor: 500 },
+          { nome: "Mari", funcao: "Produtora Pessoal", valor: 500 },
+          { nome: "Lamarca", funcao: "Técnico de Som", valor: 500 },
+          { nome: "Ferreirinha", funcao: "Autotune", valor: 200 },
+          { nome: "Sanchez", funcao: "DJ", valor: 600 },
+          { nome: "Gabriel", funcao: "Roadie", valor: 350 },
+          { nome: "Jerry", funcao: "Fotógrafo", valor: 400 }
+        ];
+
+        // Função para confirmar o produtor
+        window.confirmarProdutor = function() {
+          const produtor = document.getElementById('produtor').value.trim();
+          if (produtor.toLowerCase() === 'luke') {
+            // Se o produtor for Luke, adiciona automaticamente a equipe do Ryu The Runner
+            window.equipe = [...equipeRyuTheRunner];
+            atualizarTabela();
+            calcularTotal();
+            alert('Equipe de Ryu The Runner adicionada automaticamente.');
+            document.getElementById('equipe-form').style.display = 'none'; // Esconde o formulário de adicionar membros
+          } else {
+            document.getElementById('equipe-form').style.display = 'block'; // Mostra o formulário de adicionar membros se não for Luke
+          }
+        };
+
+        // Função para adicionar um membro à equipe
+        window.adicionarMembro = function() {
+          const nome = document.getElementById('nome').value.trim();
+          const funcao = document.getElementById('funcao').value.trim();
+          const valorInput = document.getElementById('valor-equipe').value;
+          const valor = parseFloat(valorInput);
+
+          if (nome && funcao && !isNaN(valor)) {
+            const membro = { nome, funcao, valor };
+            equipe.push(membro);
+            atualizarTabela();
+            document.getElementById('equipe-form').reset();
+            calcularTotal();
+            window.logAlteracoes.push(`Membro adicionado: ${nome}, Função: ${funcao}, Valor: R$ ${valor.toFixed(2)}`);
+          } else {
+            alert('Por favor, preencha todos os campos da equipe corretamente.');
+          }
+        };
+
+        // Função para remover um membro da equipe
+        window.removerMembro = function(index) {
+          if (confirm('Deseja realmente remover este membro?')) {
+            const membroRemovido = equipe[index];
+            equipe.splice(index, 1);
+            atualizarTabela();
+            calcularTotal();
+            window.logAlteracoes.push(`Membro removido: ${membroRemovido.nome}, Função: ${membroRemovido.funcao}, Valor: R$ ${membroRemovido.valor.toFixed(2)}`);
+          }
+        };
+
+        // Função para atualizar a tabela de membros da equipe
+        window.atualizarTabela = function() {
+          const tbody = document.querySelector('#tabela-equipe tbody');
+          tbody.innerHTML = '';
+          equipe.forEach((membro, index) => {
+            const tr = document.createElement('tr');
+
+            const tdNome = document.createElement('td');
+            tdNome.textContent = membro.nome;
+            tr.appendChild(tdNome);
+
+            const tdFuncao = document.createElement('td');
+            tdFuncao.textContent = membro.funcao;
+            tr.appendChild(tdFuncao);
+
+            const tdValor = document.createElement('td');
+            tdValor.textContent = `R$ ${membro.valor.toFixed(2)}`;
+            tr.appendChild(tdValor);
+
+            const tdAcoes = document.createElement('td');
+            const btnRemover = document.createElement('button');
+            btnRemover.textContent = 'Remover';
+            btnRemover.style.backgroundColor = '#E53935';
+            btnRemover.style.color = '#fff';
+            btnRemover.style.border = 'none';
+            btnRemover.style.padding = '5px 10px';
+            btnRemover.style.cursor = 'pointer';
+            btnRemover.onclick = function() { removerMembro(index); };
+            tdAcoes.appendChild(btnRemover);
+            tr.appendChild(tdAcoes);
+
+            tbody.appendChild(tr);
+          });
+        };
+
+        // Função para calcular os totais
+        window.calcularTotal = function() {
+          const valorShowInput = document.getElementById('valor-show').value;
+          const valorShow = parseFloat(valorShowInput) || 0;
+          const totalEquipe = equipe.reduce((acc, membro) => acc + membro.valor, 0);
+          const totalGeral = valorShow + totalEquipe;
+
+          document.getElementById('total').innerHTML = `
+            Valor do Show: R$ ${valorShow.toFixed(2)}<br>
+            Total da Equipe: R$ ${totalEquipe.toFixed(2)}<br>
+            Total Geral: R$ ${totalGeral.toFixed(2)}
+          `;
+        };
+
+        // Função para gerar o PDF com o log de alterações
+        window.gerarPDF = function() {
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF();
+
+          // Dados do show
+          const data = document.getElementById('data').value;
+          const local = document.getElementById('local').value.trim();
+          const valorShowInput = document.getElementById('valor-show').value;
+          const valorShow = parseFloat(valorShowInput);
+          const vendedor = document.getElementById('vendedor').value.trim();
+
+          if (!data || !local || isNaN(valorShow) || !vendedor) {
+            alert('Por favor, preencha todos os campos do show corretamente.');
+            return;
+          }
+
+          let yPosition = 10;
+          doc.setFontSize(16);
+          doc.text('Fechamento Financeiro do Show', 10, yPosition);
+          yPosition += 10;
+
+          doc.setFontSize(12);
+          doc.text(`Data: ${data}`, 10, yPosition);
+          yPosition += 7;
+          doc.text(`Local do Show: ${local}`, 10, yPosition);
+          yPosition += 7;
+          doc.text(`Valor do Show: R$ ${valorShow.toFixed(2)}`, 10, yPosition);
+          yPosition += 7;
+          doc.text(`Vendedor: ${vendedor}`, 10, yPosition);
+          yPosition += 10;
+
+          // Dados da equipe
+          doc.setFontSize(14);
+          doc.text('Equipe:', 10, yPosition);
+          yPosition += 7;
+
+          doc.setFontSize(12);
+          equipe.forEach((membro) => {
+            doc.text(`Nome: ${membro.nome}, Função: ${membro.funcao}, Valor: R$ ${membro.valor.toFixed(2)}`, 10, yPosition);
+            yPosition += 7;
+            // Verifica se está perto do final da página
+            if (yPosition > 280) {
+              doc.addPage();
+              yPosition = 10;
+            }
+          });
+
+          // Totais
+          const totalEquipe = equipe.reduce((acc, membro) => acc + membro.valor, 0);
+          const totalGeral = valorShow + totalEquipe;
+
+          yPosition += 10;
+          doc.setFontSize(14);
+          doc.text('Totais:', 10, yPosition);
+          yPosition += 7;
+
+          doc.setFontSize(12);
+          doc.text(`Total da Equipe: R$ ${totalEquipe.toFixed(2)}`, 10, yPosition);
+          yPosition += 7;
+          doc.text(`Total Geral: R$ ${totalGeral.toFixed(2)}`, 10, yPosition);
+
+          // Log de alterações
+          if (logAlteracoes.length > 0) {
+            yPosition += 10;
+            doc.setFontSize(14);
+            doc.text('Alterações:', 10, yPosition);
+            yPosition += 7;
+
+            doc.setFontSize(12);
+            logAlteracoes.forEach((alteracao) => {
+              doc.text(alteracao, 10, yPosition);
+              yPosition += 7;
+              if (yPosition > 280) {
+                doc.addPage();
+                yPosition = 10;
+              }
+            });
+          }
+
+          // Salva o PDF
+          doc.save('fechamento_financeiro.pdf');
+        };
+
+        // Atualiza o total quando o valor do show é alterado
+        document.getElementById('valor-show').addEventListener('input', calcularTotal);
+      });
+    </script>
+  </body>
+</html>
